@@ -1,3 +1,9 @@
+---
+title: Contact Me
+description: Get in touch with me
+layout: default
+---
+
 # Contact Me
 
 I'd love to hear from you! Fill out the form below to get in touch.
