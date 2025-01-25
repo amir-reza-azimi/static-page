@@ -1,6 +1,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 const { marked } = require('marked');
+const matter = require('gray-matter');
 
 // Configuration
 const config = {
@@ -10,9 +11,25 @@ const config = {
     staticDir: path.join(__dirname, 'static')
 };
 
-// Ensure directories exist
-fs.ensureDirSync(config.contentDir);
+// Create necessary directories
 fs.ensureDirSync(config.outputDir);
+fs.ensureDirSync(path.join(config.outputDir, 'css'));
+fs.ensureDirSync(path.join(config.outputDir, 'js'));
+fs.ensureDirSync(path.join(config.outputDir, 'images'));
+
+// Copy static assets to their respective folders
+fs.copySync(
+    path.join(config.staticDir, 'css'),
+    path.join(config.outputDir, 'css')
+);
+fs.copySync(
+    path.join(config.staticDir, 'js'),
+    path.join(config.outputDir, 'js')
+);
+fs.copySync(
+    path.join(config.staticDir, 'images'),
+    path.join(config.outputDir, 'images')
+);
 
 // Read base template
 const baseTemplate = fs.readFileSync(
@@ -48,25 +65,24 @@ fs.copySync(config.staticDir, config.outputDir);
 
 // Process markdown files
 async function buildSite() {
-    // Process pages
     const pages = fs.readdirSync(config.contentDir)
         .filter(file => file.endsWith('.md'));
 
     for (const page of pages) {
-        const content = fs.readFileSync(
+        const source = fs.readFileSync(
             path.join(config.contentDir, page),
             'utf-8'
         );
         
+        // Parse frontmatter and content
+        const { data, content } = matter(source);
+        
         // Convert markdown to HTML
         const htmlContent = marked(content);
         
-        // Get title from first line of markdown
-        const title = content.split('\n')[0].replace('#', '').trim();
-        
         // Replace template variables
         let html = baseTemplate
-            .replace('{{title}}', title)
+            .replace('{{title}}', data.title || 'My Website')
             .replace('{{content}}', htmlContent);
         
         // Write output file
